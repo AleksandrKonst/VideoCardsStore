@@ -7,13 +7,29 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using VideoCardsStore.Models;
+
 namespace VideoCardsStore
 {
     public class Startup
     {
+        public Startup(IConfiguration config)
+        {
+            Configuration = config;
+        }
+
+        private IConfiguration Configuration { get; set; }
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+            services.AddDbContext<StoreDbContext>(opts => {
+                opts.UseSqlServer(
+                    Configuration["ConnectionStrings:VideoCardsStoreConnection"]);
+            });
+            services.AddScoped<IStoreRepository, EFStoreRepository>();
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -24,6 +40,7 @@ namespace VideoCardsStore
             app.UseEndpoints(endpoints => {
                 endpoints.MapDefaultControllerRoute();
             });
+            SeedData.EnsurePopulated(app);
         }
     }
 }
